@@ -11,7 +11,8 @@ import {
     DialogContentText, 
     DialogTitle
 } from "@mui/material"
-import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import { useState } from "react";
 
 function Home() {
@@ -23,6 +24,9 @@ function Home() {
     const [deleteConfirm, setDeleteConfirm] = useState(false);      // 삭제 다이얼로그
     const [todoDeleteId, setTodoDeleteId] = useState(null);         // 삭제 다이얼로그 ID
     const [todoDeleteText, setTodoDeleteText] = useState("");       // 삭제 다이얼로그 텍스트
+
+    const [todoUpdateId, setTodoUpdateId] = useState(null);         // 수정 다이얼로그 ID
+    const [todoUpdateText, setTodoUpdateText] = useState("");       // 수정 다이얼로그 텍스트
 
     const addTodo = () => {             // 추가
         if(todoInput.trim() === "") {
@@ -43,15 +47,15 @@ function Home() {
         setTodoInput("");
     };
 
-    const deleteTodo = () => {            // 삭제
+    const handleDeleteTodo = () => {            // 삭제
         const updatedTodoList = todoList.filter((todoList) => todoList.id !== todoDeleteId);
         setTodoList(updatedTodoList);
         handleDeleteConfirmClose();
-    }
+    };
 
-    const todoToggle = (id) => {            // 할 일 완료
+    const handleTodoToggle = (id) => {            // 할 일 완료
         const newTodo = todoList.map((todoList) => todoList.id === id? {
-            ...todoList, completed: !todoList.completed
+            ...todoList, completed: !todo.completed
         } : todoList);
         setTodoList(newTodo);
     };
@@ -64,6 +68,33 @@ function Home() {
 
     const handleDeleteConfirmClose = () => {            // 다이얼로그 닫기
         setDeleteConfirm(false);
+    };
+
+    const handleUpdateTodo = (id, currentText) => {     // 수정
+        setTodoUpdateId(id);
+        setTodoUpdateText(currentText);
+    };
+
+    const handleUpdateSave = () => {                    // 수정 저장
+        const updateList = todoList.map((todo) => 
+            todo.id === todoUpdateId ? { ...todo, text: todoUpdateText } : todo
+        );
+        setTodoList(updateList);
+        setTodoUpdateId(null);
+        setTodoUpdateText("");
+    };
+
+    const handleUpdateCancel = () => {                  // 수정 취소
+        setTodoUpdateId(null);
+        setTodoUpdateText("");
+    };
+
+    const handleUpdateKey = (e) => {                    // 수정 키
+        if(e.key === "Enter") {
+            handleUpdateSave();
+        } else if(e.key === "Escape") {
+            handleUpdateCancel();
+        }
     };
 
     return(
@@ -119,21 +150,45 @@ function Home() {
                         <ListItem
                             style={{
                                 background: "#f3f3f3",
-                                borderBottom: "1px solid #d2d2d2"
+                                borderBottom: "1px solid #d2d2d2",
                             }}
                             key={todoList.id}
                             secondaryAction={
-                            <IconButton
-                                aria-label="delete"
-                                edge="end"
-                                onClick={() => handleDeleteConfirmOpen(todoList.id, todoList.text)}
-                            >
-                                <DeleteIcon />
-                            </IconButton>
+                                <>
+                                    <IconButton
+                                        aria-label="edit"
+                                        edge="end"
+                                        onClick={() => handleUpdateTodo(todoList.id, todoList.text)}
+                                    >
+                                        <EditIcon />
+                                    </IconButton>
+                                    <IconButton
+                                        aria-label="delete"
+                                        edge="end"
+                                        onClick={() => handleDeleteConfirmOpen(todoList.id, todoList.text)}
+                                    >
+                                        <DeleteIcon />
+                                    </IconButton>
+                                </>
+                            
                         }>
 
-                        <Button
+                        {todoUpdateId === todoList.id ? (
+                            <TextField
+                                fullWidth
+                                autoFocus
+                                value={todoUpdateText}
+                                onChange={(e) => setTodoUpdateText(e.target.value)}
+                                onKeyDown={handleUpdateKey}
+                                onBlur={handleUpdateCancel}
+                                size="small"
+                            >
+
+                            </TextField>
+                        ) : (
+                            <Button
                             variant="text"
+                            size="large"
                             style={{
                             color: todoList.completed ? "gray" : "black",
                             justifyContent:"start",
@@ -141,14 +196,15 @@ function Home() {
                             paddingLeft:"3vw",
                             textDecoration: todoList.completed ? "line-through" : "none",
                         }}
-                            onClick={() => todoToggle(todoList.id)}
+                            onClick={() => handleTodoToggle(todoList.id)}
                         >
                             {todoList.text}
                         </Button>
+                        )}
                         <div style={{
                             display: "flex",
                             justifyContent: "center",
-                            width: "10%"
+                            width: "10%",
                         }}>
                             {todoList.createAt}
                         </div>
@@ -174,7 +230,7 @@ function Home() {
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={deleteTodo}>삭제</Button>
+                    <Button onClick={handleDeleteTodo}>삭제</Button>
                     <Button onClick={handleDeleteConfirmClose} autoFocus>
                         취소
                     </Button>
