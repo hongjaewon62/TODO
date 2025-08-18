@@ -9,7 +9,11 @@ import {
     DialogActions, 
     DialogContent, 
     DialogContentText, 
-    DialogTitle
+    DialogTitle,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel
 } from "@mui/material"
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -27,6 +31,8 @@ function Home() {
 
     const [todoUpdateId, setTodoUpdateId] = useState(null);         // 수정 다이얼로그 ID
     const [todoUpdateText, setTodoUpdateText] = useState("");       // 수정 다이얼로그 텍스트
+
+    const [sortOption, setSortOption] = useState("all");
 
     const addTodo = () => {             // 추가
         if(todoInput.trim() === "") {
@@ -55,7 +61,7 @@ function Home() {
 
     const handleTodoToggle = (id) => {            // 할 일 완료
         const newTodo = todoList.map((todoList) => todoList.id === id? {
-            ...todoList, completed: !todo.completed
+            ...todoList, completed: !todoList.completed
         } : todoList);
         setTodoList(newTodo);
     };
@@ -95,6 +101,29 @@ function Home() {
         } else if(e.key === "Escape") {
             handleUpdateCancel();
         }
+    };
+
+    const getSortTodo = () => {                         // 정렬 필터
+        let sortTodo = [...todoList];
+        switch(sortOption) {
+            case "all":                                 // 전체
+                break;
+            case "latest":                              // 최신 순 
+                sortTodo.sort((firstTodo, secondTodo) => new Date(secondTodo.createAt) - new Date(firstTodo.createAt));
+                break;
+            case "oldest":                              // 오래된 순
+                sortTodo.sort((firstTodo, secondTodo) => new Date(firstTodo.createAt) - new Date(secondTodo.createAt));
+                break;
+            case "completed":                           // 완료
+                sortTodo = sortTodo.filter((todoList) => todoList.completed === true);
+                break;
+            case "notCompleted":                        // 미완료
+                sortTodo = sortTodo.filter((todoList) => todoList.completed === false);
+                break;
+            default:
+                break;
+        }
+        return sortTodo;
     };
 
     return(
@@ -144,9 +173,27 @@ function Home() {
                         추가
                     </Button>
                 </Container>
+                <FormControl 
+                    style={{
+                        minWidth: "100px", 
+                        margin: "20px", 
+                        background: "white"
+                    }}>
+                    <InputLabel><b>정렬</b></InputLabel>
+                    <Select
+                        value={sortOption}
+                        onChange={(e) => setSortOption(e.target.value)}
+                    >
+                        <MenuItem value="all">전체</MenuItem>
+                        <MenuItem value="latest">최신 순</MenuItem>
+                        <MenuItem value="oldest">오래된 순</MenuItem>
+                        <MenuItem value="completed">완료</MenuItem>
+                        <MenuItem value="notCompleted">할 일</MenuItem>
+                    </Select>
+                </FormControl>
             </div>
                 <List>
-                    {todoList.map((todoList) => (
+                    {getSortTodo().map((todoList) => (
                         <ListItem
                             style={{
                                 background: "#f3f3f3",
