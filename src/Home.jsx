@@ -13,17 +13,23 @@ import {
     Select,
     MenuItem,
     FormControl,
-    InputLabel
-} from "@mui/material"
+    InputLabel,
+    InputAdornment,
+    Alert,
+    Snackbar
+} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import { useState } from "react";
+import MicIcon from "@mui/icons-material/Mic";
+import MicNoneIcon from "@mui/icons-material/MicNone";
+import { useEffect, useState } from "react";
+import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 
 function Home() {
     const [todoInput, setTodoInput] = useState("");         // 추가할 텍스트
     const [todoList, setTodoList] = useState([              // TO DO 리스트
-        {id : 1, text: "테스트", completed: false, createAt: "2024-05-03"},
-        {id : 2, text: "테스트", completed: false, createAt: "2025-06-08"},
+        {id : 1, text: "영어 공부", completed: false, createAt: "2024-05-03"},
+        {id : 2, text: "코딩테스트", completed: false, createAt: "2025-06-08"},
     ]);
     const [deleteConfirm, setDeleteConfirm] = useState(false);      // 삭제 다이얼로그
     const [todoDeleteId, setTodoDeleteId] = useState(null);         // 삭제 다이얼로그 ID
@@ -34,8 +40,36 @@ function Home() {
 
     const [sortOption, setSortOption] = useState("all");
 
-    const addTodo = () => {             // 추가
-        if(todoInput.trim() === "") {
+    const [mic, setMic] = useState(false);
+    const [showMicAlter, setShowMicAlter] = useState(false);
+
+    // react-speech-recognition 훅
+    const {
+        transcript,
+        finalTranscript,
+        listening,
+        resetTranscript,
+        browserSupportsSpeechRecognition
+    } = useSpeechRecognition();
+
+    useEffect(() => {
+        if (transcript) {
+            setTodoInput(transcript);
+        }
+    }, [transcript]);
+
+    useEffect(() => {
+        if (finalTranscript && finalTranscript.trim() !== "") {
+        addTodo(finalTranscript);
+        resetTranscript();
+        setMic(false);
+        SpeechRecognition.stopListening();
+        }
+    }, [finalTranscript]);
+
+    const addTodo = (text) => {             // 추가
+        const inputText = text || todoInput;
+        if( !inputText ||inputText.trim() === "") {
             return;
         }
 
@@ -44,12 +78,12 @@ function Home() {
 
         const newTodo = {
             id : Date.now(),
-            text: todoInput,
+            text: inputText,
             createAt: createDate.toISOString().slice(0, 10),
-            completed: false
+            completed: false,
         };
 
-        setTodoList([...todoList, newTodo]);
+        setTodoList((prev) => [...prev, newTodo]);
         setTodoInput("");
     };
 
@@ -102,6 +136,7 @@ function Home() {
             handleUpdateCancel();
         }
     };
+    
 
     const getSortTodo = () => {                         // 정렬 필터
         let sortTodo = [...todoList];
@@ -125,6 +160,21 @@ function Home() {
         }
         return sortTodo;
     };
+
+    const handleMicClick = () => {                      //  마이크 버튼
+        if (!browserSupportsSpeechRecognition) { 
+            setShowMicAlter(true);
+            return;
+        }
+        if (listening) {
+            SpeechRecognition.stopListening();
+            setMic(false);
+        } else {
+            resetTranscript();
+            SpeechRecognition.startListening({ continuous: true, language: "ko-KR" });
+            setMic(true);
+        }
+    }
 
     return(
         <div>
@@ -155,23 +205,45 @@ function Home() {
                     <TextField
                         value={todoInput}
                         onChange={(e) => setTodoInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && addTodo()}
+                        onKeyDown={(e) => e.key === "Enter" && addTodo(todoInput)}
                         fullWidth
                         id="outlined-basic" 
                         label="할 일" 
-                        variant="outlined" 
+                        variant="outlined"
+                        slotProps={{
+                            input: {
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton onClick={handleMicClick}>
+                                           {mic ? < MicIcon /> : <MicNoneIcon/>}  
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                            },
+                        }}
                         style={{width: "50vw",
                         background: "white"
                     }}/>
                     <Button
                         variant="contained"
-                        onClick={addTodo}
+                        onClick={() => addTodo(todoInput)}
                         style={{
                             borderRadius: "50px"
                         }}
                     >
                         추가
                     </Button>
+                    { showMicAlter && (         // 마이크 호환되지 않는 브라우저 경고
+                            <Snackbar
+                                open={showMicAlter}
+                                autoHideDuration={2000}
+                                onClose={() => setShowMicAlter(false)}
+                                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+                            >
+                                <Alert severity="warning" onClose={() => setShowMicAlter(false)}>지원하지 않는 브라우저입니다. 다른 브라우저에서 시도해 주세요.</Alert>
+                            </Snackbar>
+                        )
+                    }
                 </Container>
                 <FormControl 
                     style={{
