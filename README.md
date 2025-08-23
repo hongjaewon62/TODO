@@ -1,12 +1,38 @@
-# React + Vite
+# 음성인식 기반 TODO 앱
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**이 TODO 앱은 React와 MUI, 음성인식 라이브러리를 사용하여 구현한 할 일 앱입니다.**
 
-Currently, two official plugins are available:
+**텍스트 입력 외에도 음성 인식 기능을 통해 할 일을 추가할 수 있습니다.**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 기능 설명
 
-## Expanding the ESLint configuration
+- **할 일 추가**
+  - 입력창에 직접 텍스트 입력 후 추가 버튼 클릭 또는 Enter
+  - 마이크 버튼을 통해 음성 인식으로 입력 가능
+- **할 일 수정**
+  - 수정 아이콘(연필) 클릭 시 내용 편집 후 Enter/ESC 로 저장/취소
+- **할 일 삭제**
+  - 삭제 아이콘(휴지통) 클릭 시 다이얼로그를 통해 삭제 여부 확인
+- **할 일 완료 처리**
+  - 리스트 아이템 클릭 시 완료/미완료 상태 토글
+- **정렬 기능**
+  - 전체 / 최신순 / 오래된순 / 완료 / 미완료 기준으로 필터링
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 빌드 및 실행 방법
+1. node.js 설치
+2. git clone https://github.com/hongjaewon62/TODO.git
+3. 복사한 프로젝트 실행
+4. npm install
+5. 백엔드 서버 실행
+6. npm run dev
+7. http://localhost:5173/ 에 접속
+
+## 주력으로 사용한 컴포넌트
+- **TextField** : 할 일 입력 및 수정 시 입력 필드 제공하기 위해 사용
+
+- **Button** : 추가/수정/삭제 등 주요 버튼을 제공하기 위해 사용
+
+- **List / ListItem** : 할 일 목록을 깔끔하게 표현하기 위해 사용
+
+## 백엔드 리포지토리
+https://github.com/hongjaewon62/todoSpring
