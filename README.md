@@ -18,6 +18,8 @@
 - **정렬 기능**
   - 전체 / 최신순 / 오래된순 / 완료 / 미완료 기준으로 필터링
 
+<img width="640" height="280" alt="Image" src="https://github.com/user-attachments/assets/8f39904e-eebe-4f25-9f7a-e35972f7e702" />
+
 ## 빌드 및 실행 방법
 1. node.js 설치
 2. git clone https://github.com/hongjaewon62/TODO.git
