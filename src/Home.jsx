@@ -107,7 +107,7 @@ function Home() {
                 text: inputText,
                 completed: false,
             });
-            setTodoList((prev) => [...prev, res.data]);
+            setTodoList((prev) => [res.data, ...prev]);
             setTodoInput("");
         } catch (err) {
             console.error("추가 실패", err);
