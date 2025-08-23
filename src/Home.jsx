@@ -53,7 +53,7 @@ function Home() {
 
     useEffect(() => {
         loadTodoList();
-    }, []);
+    }, [sortOption]);
 
     useEffect(() => {
         if (transcript) {
@@ -70,9 +70,9 @@ function Home() {
         }
     }, [finalTranscript]);
 
-    const loadTodoList = async () => {
+    const loadTodoList = async () => {                  // 할 일 불러오기
         try {
-            const res = await getTodos();
+            const res = await getTodos(sortOption);
             setTodoList(res.data);
         } catch (err) {
             console.error("할 일을 불러오지 못했습니다.", err);
@@ -84,7 +84,7 @@ function Home() {
     });
 
     // 전체 조회
-    const getTodos = () => api.get("");
+    const getTodos = (sortOption) => api.get("", {params: {sortOption}});
 
     // 추가
     const createTodo = (todo) => api.post("", todo);
@@ -185,30 +185,6 @@ function Home() {
         }
     };
     
-
-    const getSortTodo = () => {                         // 정렬 필터
-        let sortTodo = [...todoList];
-        switch(sortOption) {
-            case "all":                                 // 전체
-                break;
-            case "latest":                              // 최신 순 
-                sortTodo.sort((firstTodo, secondTodo) => new Date(secondTodo.createAt) - new Date(firstTodo.createAt));
-                break;
-            case "oldest":                              // 오래된 순
-                sortTodo.sort((firstTodo, secondTodo) => new Date(firstTodo.createAt) - new Date(secondTodo.createAt));
-                break;
-            case "completed":                           // 완료
-                sortTodo = sortTodo.filter((todoList) => todoList.completed === true);
-                break;
-            case "notCompleted":                        // 미완료
-                sortTodo = sortTodo.filter((todoList) => todoList.completed === false);
-                break;
-            default:
-                break;
-        }
-        return sortTodo;
-    };
-
     const handleMicClick = () => {                      //  마이크 버튼
         if (!browserSupportsSpeechRecognition) { 
             setShowMicAlter(true);
@@ -313,7 +289,7 @@ function Home() {
                 </FormControl>
             </div>
                 <List>
-                    {getSortTodo().map((todoList) => (
+                    {todoList.map((todoList) => (
                         <ListItem
                             style={{
                                 background: "#f3f3f3",
