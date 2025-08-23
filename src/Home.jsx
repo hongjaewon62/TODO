@@ -24,13 +24,12 @@ import MicIcon from "@mui/icons-material/Mic";
 import MicNoneIcon from "@mui/icons-material/MicNone";
 import { useEffect, useState } from "react";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
+import axios from "axios";
 
 function Home() {
     const [todoInput, setTodoInput] = useState("");         // 추가할 텍스트
-    const [todoList, setTodoList] = useState([              // TO DO 리스트
-        {id : 1, text: "영어 공부", completed: false, createAt: "2024-05-03"},
-        {id : 2, text: "코딩테스트", completed: false, createAt: "2025-06-08"},
-    ]);
+    const [todoList, setTodoList] = useState([]);            // TO DO 리스트
+    
     const [deleteConfirm, setDeleteConfirm] = useState(false);      // 삭제 다이얼로그
     const [todoDeleteId, setTodoDeleteId] = useState(null);         // 삭제 다이얼로그 ID
     const [todoDeleteText, setTodoDeleteText] = useState("");       // 삭제 다이얼로그 텍스트
@@ -53,6 +52,10 @@ function Home() {
     } = useSpeechRecognition();
 
     useEffect(() => {
+        loadTodoList();
+    }, []);
+
+    useEffect(() => {
         if (transcript) {
             setTodoInput(transcript);
         }
@@ -67,37 +70,75 @@ function Home() {
         }
     }, [finalTranscript]);
 
-    const addTodo = (text) => {             // 추가
+    const loadTodoList = async () => {
+        try {
+            const res = await getTodos();
+            setTodoList(res.data);
+        } catch (err) {
+            console.error("할 일을 불러오지 못했습니다.", err);
+        }
+    };
+
+    const api = axios.create({
+        baseURL: "/api/todoList",
+    });
+
+    // 전체 조회
+    const getTodos = () => api.get("");
+
+    // 추가
+    const createTodo = (todo) => api.post("", todo);
+
+    // 수정
+    const updateTodo = (id, todo) => api.put(`/${id}`, todo);
+    const updateCompleted = (id, todo) => api.put(`/${id}/completed`, todo);
+
+    // 삭제
+    const deleteTodo = (id) => api.delete(`/${id}`);
+
+    const addTodo = async (text) => {             // 추가
         const inputText = text || todoInput;
         if( !inputText ||inputText.trim() === "") {
             return;
         }
-
-        const date = new Date();
-        const createDate = new Date(date.getTime() + 9 * 60 * 60 * 1000);   // KST
-
-        const newTodo = {
-            id : Date.now(),
-            text: inputText,
-            createAt: createDate.toISOString().slice(0, 10),
-            completed: false,
-        };
-
-        setTodoList((prev) => [...prev, newTodo]);
-        setTodoInput("");
+        
+        try {
+            const res = await createTodo({
+                text: inputText,
+                completed: false,
+            });
+            setTodoList((prev) => [...prev, res.data]);
+            setTodoInput("");
+        } catch (err) {
+            console.error("추가 실패", err);
+        }
     };
 
-    const handleDeleteTodo = () => {            // 삭제
-        const updatedTodoList = todoList.filter((todoList) => todoList.id !== todoDeleteId);
-        setTodoList(updatedTodoList);
-        handleDeleteConfirmClose();
+    const handleDeleteTodo = async () => {            // 삭제
+        try {
+            await deleteTodo(todoDeleteId);
+            setTodoList((prev) => prev.filter((todo) => todo.id !== todoDeleteId));
+            handleDeleteConfirmClose();
+        } catch(err) {
+            console.error("삭제 실패", err);
+        }
     };
 
-    const handleTodoToggle = (id) => {            // 할 일 완료
-        const newTodo = todoList.map((todoList) => todoList.id === id? {
-            ...todoList, completed: !todoList.completed
-        } : todoList);
-        setTodoList(newTodo);
+    const handleTodoToggle = async (id) => {            // 할 일 완료
+        try {
+            const targetTodo = todoList.find((todo) => todo.id === id);
+            if(!targetTodo) {
+                return;
+            }
+
+            const res = await updateCompleted(id, {
+                ...targetTodo, completed: !targetTodo.completed,
+            });
+
+            setTodoList((prev) => prev.map((todo) => (todo.id === id ? res.data : todo)));
+        } catch(err) {
+            console.error("완료 변경 실패", err);
+        }
     };
 
     const handleDeleteConfirmOpen = (id, text) => {     // 다이얼로그 열기
@@ -115,13 +156,20 @@ function Home() {
         setTodoUpdateText(currentText);
     };
 
-    const handleUpdateSave = () => {                    // 수정 저장
-        const updateList = todoList.map((todo) => 
-            todo.id === todoUpdateId ? { ...todo, text: todoUpdateText } : todo
-        );
-        setTodoList(updateList);
-        setTodoUpdateId(null);
-        setTodoUpdateText("");
+    const handleUpdateSave = async () => {                    // 수정 저장
+        try {
+            const res = await updateTodo(todoUpdateId, {
+                text : todoUpdateText,
+            });
+            setTodoList((prev) =>
+                prev.map((todo) => 
+                    (todo.id === todoUpdateId ? res.data : todo))
+            );
+            setTodoUpdateId(null);
+            setTodoUpdateText("");
+        } catch (err) {
+            console.error("수정 실패", err);
+        }
     };
 
     const handleUpdateCancel = () => {                  // 수정 취소
@@ -325,7 +373,7 @@ function Home() {
                             justifyContent: "center",
                             width: "10%",
                         }}>
-                            {todoList.createAt}
+                            {todoList.createAt ? todoList.createAt.slice(0, 10) : ""}
                         </div>
                         </ListItem>
                     ))}
